@@ -4,32 +4,144 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/java
 
 trigger:
-- master
+- none
+#- master
 
-pool:
-  vmImage: ubuntu-latest
+resources:
+- repo: self
 
-steps:
-- task: Maven@3
-  inputs:
-    mavenPomFile: 'pom.xml'
-    mavenOptions: '-Xmx3072m'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '1.8'
-    jdkArchitectureOption: 'x64'
-    publishJUnitResults: true
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    goals: 'package'
+parameters:
+  - name: imageTagToUse
+    displayName: What Image Should We Use?
+    type: string
+    default: new
 
+variables:
+- group: common-group
+- name: vmImageName
+  value: 'ubuntu-latest'
 
-- task: CopyFiles@2
-  inputs:
-    SourceFolder: '$(system.defaultworkingdirectory)'
-    Contents: '**/*.war'
-    TargetFolder: '$(build.artifactstagingdirectory)'
+# pool:
+#   vmImage: ubuntu-latest
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    ArtifactName: 'drop'
-    publishLocation: 'Container'
+stages:
+- stage: Build_Stage
+  displayName: Build stage
+  # dependsOn: Create_Resources
+  jobs:
+    - job: MavenBuild
+      displayName: Build and push an image to container registry
+      pool:
+        vmImage: $(vmImageName)
+
+      steps:
+      - task: Maven@3
+        inputs:
+          mavenPomFile: 'pom.xml'
+          mavenOptions: '-Xmx3072m'
+          javaHomeOption: 'JDKVersion'
+          jdkVersionOption: '1.8'
+          jdkArchitectureOption: 'x64'
+          publishJUnitResults: true
+          testResultsFiles: '**/surefire-reports/TEST-*.xml'
+          goals: 'package'
+
+      - task: CopyFiles@2
+        inputs:
+          SourceFolder: '$(system.defaultworkingdirectory)'
+          Contents: '**/*.war'
+          TargetFolder: '$(build.artifactstagingdirectory)'
+
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'drop'
+          publishLocation: 'Container'
+
+    - job: BuildImage
+      displayName: Build and push an image to container registry
+    # condition: or(succeeded(), ne(variables['Azure.CreateResources'], 'true'))
+
+      pool:
+        vmImage: $(vmImageName)
+      steps:
+      - task: Docker@2
+        displayName: Build and push an image to container registry
+        condition: eq('${{ parameters.imageTagToUse}}', 'new')
+        inputs:
+          containerRegistry: $(dockerRegistryServiceConnection)
+          repository: $(ACR.RepositoryName)
+          command: 'buildAndPush'
+          Dockerfile: '**/Dockerfile'
+          tags:  |
+           $(Build.BuildId)
+           latest
+            
+      - task: Bash@3
+        name: 'DockerTag'
+        inputs:
+          targetType: 'inline'
+          script: |
+            echo "${{parameters.imageTagToUse}}"
+            echo $BUILD_BUILDID
+            tagId=$BUILD_BUILDID
+            if [ "${{parameters.imageTagToUse}}" != new ];
+            then
+              echo "Setting to an existing tag"
+              tagId="${{parameters.imageTagToUse}}"
+            fi
+            echo "TAG_ID: $tagId"
+            echo "##vso[task.setvariable variable=TAG_ID;isOutput=true]$tagId"
+      - task: Bash@3
+        inputs:
+          targetType: 'inline'
+          script: |
+            echo $(DockerTag.TAG_ID)
+
+      - task: CopyFiles@2
+        inputs:
+          SourceFolder: 'bakefiles/'
+          Contents: '*.yml'
+          TargetFolder: '$(build.artifactstagingdirectory)'
+
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'manifests'
+          publishLocation: 'Container'
+
+- stage: Deploy
+  displayName: Deploy stage
+  dependsOn: Build_Stage
+
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy
+    pool:
+      vmImage: $(vmImageName)
+    environment: 'dev'
+    strategy:
+      runOnce:
+        deploy:
+         steps:
+          - task: KubernetesManifest@0
+            inputs:
+              action: 'createSecret'
+              kubernetesServiceConnection: 'aksCluster1-default-1708'
+              secretType: 'dockerRegistry'
+              secretName: 'azuresecret'
+              namespace: default
+              dockerRegistryEndpoint: 'armaksclustercontainer'
+                  
+          - task: KubernetesManifest@0
+            inputs:
+              action: 'deploy'
+              kubernetesServiceConnection: 'aksCluster1-default-1708'
+              manifests: |
+                $(Pipeline.Workspace)/manifests/deployment.yml
+                $(Pipeline.Workspace)/manifests/service.yml
+              containers: |
+                $(containerRegistry)/$(imageRepository):$(tag)
+              imagePullSecrets: |
+                $(imagePullSecret)
+
