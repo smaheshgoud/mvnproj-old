@@ -65,12 +65,23 @@ stages:
       pool:
         vmImage: $(vmImageName)
       steps:
+      # - task: Docker@2
+      #   displayName: Build and push an image to container registry
+      #   condition: eq('${{ parameters.imageTagToUse}}', 'new')
+      #   inputs:
+      #     containerRegistry: $(dockerRegistryServiceConnection)
+      #     repository: $(ACR.RepositoryName)
+      #     command: 'buildAndPush'
+      #     Dockerfile: '**/Dockerfile'
+      #     tags:  |
+      #      $(Build.BuildId)
+      #      latest
       - task: Docker@2
         displayName: Build and push an image to container registry
         condition: eq('${{ parameters.imageTagToUse}}', 'new')
         inputs:
-          containerRegistry: $(dockerRegistryServiceConnection)
-          repository: $(ACR.RepositoryName)
+          containerRegistry: 'containerregistery9'
+          repository: '$(ACR.RepositoryName)'
           command: 'buildAndPush'
           Dockerfile: '**/Dockerfile'
           tags:  |
@@ -110,38 +121,38 @@ stages:
           ArtifactName: 'manifests'
           publishLocation: 'Container'
 
-- stage: Deploy
-  displayName: Deploy stage
-  dependsOn: Build_Stage
+# - stage: Deploy
+#   displayName: Deploy stage
+#   dependsOn: Build_Stage
 
-  jobs:
-  - deployment: Deploy
-    displayName: Deploy
-    pool:
-      vmImage: $(vmImageName)
-    environment: 'dev'
-    strategy:
-      runOnce:
-        deploy:
-         steps:
-          - task: KubernetesManifest@0
-            inputs:
-              action: 'createSecret'
-              kubernetesServiceConnection: 'aksCluster1-default-1708'
-              secretType: 'dockerRegistry'
-              secretName: 'azuresecret'
-              namespace: default
-              dockerRegistryEndpoint: 'armaksclustercontainer'
+#   jobs:
+#   - deployment: Deploy
+#     displayName: Deploy
+#     pool:
+#       vmImage: $(vmImageName)
+#     environment: 'dev'
+#     strategy:
+#       runOnce:
+#         deploy:
+#          steps:
+#           - task: KubernetesManifest@0
+#             inputs:
+#               action: 'createSecret'
+#               kubernetesServiceConnection: 'aksCluster1-default-1708'
+#               secretType: 'dockerRegistry'
+#               secretName: 'azuresecret'
+#               namespace: default
+#               dockerRegistryEndpoint: 'armaksclustercontainer'
                   
-          - task: KubernetesManifest@0
-            inputs:
-              action: 'deploy'
-              kubernetesServiceConnection: 'aksCluster1-default-1708'
-              manifests: |
-                $(Pipeline.Workspace)/manifests/deployment.yml
-                $(Pipeline.Workspace)/manifests/service.yml
-              containers: |
-                $(containerRegistry)/$(imageRepository):$(tag)
-              imagePullSecrets: |
-                $(imagePullSecret)
+#           - task: KubernetesManifest@0
+#             inputs:
+#               action: 'deploy'
+#               kubernetesServiceConnection: 'aksCluster1-default-1708'
+#               manifests: |
+#                 $(Pipeline.Workspace)/manifests/deployment.yml
+#                 $(Pipeline.Workspace)/manifests/service.yml
+#               containers: |
+#                 $(containerRegistry)/$(imageRepository):$(tag)
+#               imagePullSecrets: |
+#                 $(imagePullSecret)
 
