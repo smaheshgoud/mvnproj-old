@@ -12,7 +12,7 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 0x219BD9C9
 
 RUN mkdir -p ${HOME_PATH}
 WORKDIR ${HOME_PATH}
-COPY ${Build.ArtifactStagingDirectory}target/*.war ${HOME_PATH}/myproj.war
+COPY target/*.war ${HOME_PATH}/myproj.war
 
 EXPOSE 8080
 CMD [ "java", "-war", "${HOME_PATH}/myproj.war" ]
