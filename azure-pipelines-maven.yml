@@ -44,12 +44,12 @@ stages:
           publishJUnitResults: true
           testResultsFiles: '**/surefire-reports/TEST-*.xml'
           goals: 'clean package'
-      - task: CopyFiles@2
-        inputs:
-          SourceFolder: '$(system.defaultworkingdirectory)'
-          Contents: '**/*.war'
-          TargetFolder: '$(system.defaultworkingdirectory)/target/'
-          CleanTargetFolder: true
+      # - task: CopyFiles@2
+      #   inputs:
+      #     SourceFolder: '$(system.defaultworkingdirectory)'
+      #     Contents: '**/*.war'
+      #     TargetFolder: '$(system.defaultworkingdirectory)/target/'
+      #     CleanTargetFolder: true
       - task: CopyFiles@2
         inputs:
           SourceFolder: '$(system.defaultworkingdirectory)'
