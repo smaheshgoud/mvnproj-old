@@ -30,7 +30,7 @@ stages:
   # dependsOn: Create_Resources
   jobs:
     - job: MavenBuild
-      displayName: Build and push an image to container registry
+      displayName: Maven Build
       pool:
         vmImage: $(vmImageName)
       steps:
@@ -50,6 +50,13 @@ stages:
       #     Contents: '**/*.war'
       #     TargetFolder: '$(system.defaultworkingdirectory)/target/'
       #     CleanTargetFolder: true
+
+    - job: CopyFiles
+      dependsOn:MavenBuild
+      displayName: Copying Files
+      pool:
+        vmImage: $(vmImageName)
+      steps:
       - task: CopyFiles@2
         inputs:
           SourceFolder: '$(system.defaultworkingdirectory)'
@@ -62,7 +69,7 @@ stages:
           publishLocation: 'Container'
 
     - job: BuildImage
-      dependsOn: MavenBuild
+      dependsOn: Copyfiles
       displayName: Build and push an image to container registry
     # condition: or(succeeded(), ne(variables['Azure.CreateResources'], 'true'))
       pool:
