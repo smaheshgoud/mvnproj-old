@@ -44,11 +44,11 @@ stages:
           publishJUnitResults: true
           testResultsFiles: '**/surefire-reports/TEST-*.xml'
           goals: 'compile package'
-      - task: CopyFiles@2
-        inputs:
-          SourceFolder: '$(system.defaultworkingdirectory)'
-          Contents: '**/*.war'
-          TargetFolder: '$(Build.SourcesDirectory)'
+      # - task: CopyFiles@2
+      #   inputs:
+      #     SourceFolder: '$(system.defaultworkingdirectory)'
+      #     Contents: '**/*.war'
+      #     TargetFolder: '$(Build.SourcesDirectory)'
       #     CleanTargetFolder: true
 
     # - job: CopyFiles
