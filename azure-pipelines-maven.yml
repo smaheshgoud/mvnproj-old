@@ -44,19 +44,19 @@ stages:
           publishJUnitResults: true
           testResultsFiles: '**/surefire-reports/TEST-*.xml'
           goals: 'clean package'
-      # - task: CopyFiles@2
-      #   inputs:
-      #     SourceFolder: '$(system.defaultworkingdirectory)'
-      #     Contents: '**/*.war'
-      #     TargetFolder: '$(system.defaultworkingdirectory)/target/'
+      - task: CopyFiles@2
+        inputs:
+          SourceFolder: '$(system.defaultworkingdirectory)'
+          Contents: '**/*.war'
+          TargetFolder: '/'
       #     CleanTargetFolder: true
 
-    - job: CopyFiles
-      dependsOn: MavenBuild
-      displayName: Copying Files
-      pool:
-        vmImage: $(vmImageName)
-      steps:
+    # - job: CopyFiles
+    #   dependsOn: MavenBuild
+    #   displayName: Copying Files
+    #   pool:
+    #     vmImage: $(vmImageName)
+    #   steps:
       - task: CopyFiles@2
         inputs:
           SourceFolder: '$(system.defaultworkingdirectory)'
@@ -69,7 +69,7 @@ stages:
           publishLocation: 'Container'
 
     - job: BuildImage
-      dependsOn: Copyfiles
+      dependsOn: MavenBuild
       displayName: Build and push an image to container registry
     # condition: or(succeeded(), ne(variables['Azure.CreateResources'], 'true'))
       pool:
