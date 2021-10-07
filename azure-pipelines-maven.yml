@@ -44,22 +44,22 @@ stages:
           publishJUnitResults: true
           testResultsFiles: '**/surefire-reports/TEST-*.xml'
           goals: 'clean package'
-      # - task: CopyFiles@2
-      #   inputs:
-      #     SourceFolder: '$(system.defaultworkingdirectory)'
-      #     Contents: '**/*.war'
-      #     TargetFolder: 'target/'
-      #     CleanTargetFolder: true
-      # - task: CopyFiles@2
-      #   inputs:
-      #     SourceFolder: '$(system.defaultworkingdirectory)'
-      #     Contents: '**/*.war'
-      #     TargetFolder: '$(build.artifactstagingdirectory)'
-      # - task: PublishBuildArtifacts@1
-      #   inputs:
-      #     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-      #     ArtifactName: 'drop'
-      #     publishLocation: 'Container'
+      - task: CopyFiles@2
+        inputs:
+          SourceFolder: '$(system.defaultworkingdirectory)'
+          Contents: '**/*.war'
+          TargetFolder: '$(system.defaultworkingdirectory)/target/'
+          CleanTargetFolder: true
+      - task: CopyFiles@2
+        inputs:
+          SourceFolder: '$(system.defaultworkingdirectory)'
+          Contents: '**/*.war'
+          TargetFolder: '$(build.artifactstagingdirectory)'
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'drop'
+          publishLocation: 'Container'
 
     - job: BuildImage
       dependsOn: MavenBuild
