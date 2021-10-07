@@ -48,7 +48,7 @@ stages:
         inputs:
           SourceFolder: '$(system.defaultworkingdirectory)'
           Contents: '**/*.war'
-          TargetFolder: '/'
+          TargetFolder: '$(Build.SourcesDirectory)'
       #     CleanTargetFolder: true
 
     # - job: CopyFiles
