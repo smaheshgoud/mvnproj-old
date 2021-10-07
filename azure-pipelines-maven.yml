@@ -33,7 +33,6 @@ stages:
       displayName: Build and push an image to container registry
       pool:
         vmImage: $(vmImageName)
-
       steps:
       - task: Maven@3
         inputs:
@@ -59,23 +58,13 @@ stages:
           publishLocation: 'Container'
 
     - job: BuildImage
+      dependsOn: MavenBuild
       displayName: Build and push an image to container registry
     # condition: or(succeeded(), ne(variables['Azure.CreateResources'], 'true'))
-
       pool:
         vmImage: $(vmImageName)
       steps:
-      # - task: Docker@2
-      #   displayName: Build and push an image to container registry
-      #   condition: eq('${{ parameters.imageTagToUse}}', 'new')
-      #   inputs:
-      #     containerRegistry: $(dockerRegistryServiceConnection)
-      #     repository: $(ACR.RepositoryName)
-      #     command: 'buildAndPush'
-      #     Dockerfile: '**/Dockerfile'
-      #     tags:  |
-      #      $(Build.BuildId)
-      #      latest
+      
       - task: Docker@2
         displayName: Build and push an image to container registry
         condition: eq('${{ parameters.imageTagToUse}}', 'new')
@@ -120,6 +109,18 @@ stages:
           PathtoPublish: '$(Build.ArtifactStagingDirectory)'
           ArtifactName: 'manifests'
           publishLocation: 'Container'
+
+      # - task: Docker@2
+      #   displayName: Build and push an image to container registry
+      #   condition: eq('${{ parameters.imageTagToUse}}', 'new')
+      #   inputs:
+      #     containerRegistry: $(dockerRegistryServiceConnection)
+      #     repository: $(ACR.RepositoryName)
+      #     command: 'buildAndPush'
+      #     Dockerfile: '**/Dockerfile'
+      #     tags:  |
+      #      $(Build.BuildId)
+      #      latest
 
 # - stage: Deploy
 #   displayName: Deploy stage
