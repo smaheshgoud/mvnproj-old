@@ -1,0 +1,19 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: acsregistryrepo 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: acsregistryrepo
+  template:
+    metadata:
+      labels:
+        app: acsregistryrepo 
+    spec:
+      containers:
+        - name: acsregistryrepo 
+          image: containerregistery9.azurecr.io/acsregistryrepo
+          ports:
+          - containerPort: 8080
