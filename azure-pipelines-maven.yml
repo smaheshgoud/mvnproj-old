@@ -52,7 +52,7 @@ stages:
       #     CleanTargetFolder: true
 
     - job: CopyFiles
-      dependsOn:MavenBuild
+      dependsOn: MavenBuild
       displayName: Copying Files
       pool:
         vmImage: $(vmImageName)
